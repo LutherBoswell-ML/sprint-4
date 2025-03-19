@@ -7,7 +7,7 @@ st.title("Interactive Data Dashboard")
 st.header("Exploratory Analysis of Your Dataset")
 
 # Load Data
-df = pd.read_csv('/Users/lu/sprint-4/vehicles_us.csv')  # Adjust path if needed
+df = pd.read_csv('vehicles_us.csv')   # Adjust path if needed
 
 # Show Data Preview
 if st.checkbox("Show raw data"):
