@@ -1,53 +1,38 @@
-import streamlit as st
+# app.py - Streamlit Dashboard for Vehicle Data
+
+import streamlit as st # type: ignore
 import pandas as pd
-import plotly_express as px
-import plotly.graph_objects as go
+import plotly.express as px
 
-df = pd.read_csv('vehicles_us.csv')
-df['manufacturer'] = df['model'].apply(lambda x: x.split()[0])
+# Title and Header
+st.title("Interactive Data Dashboard")
+st.header("Exploratory Analysis of Your Dataset")
 
-st.header('Data viewer')
-show_manuf_1k_ads = st.checkbox('Include manufacturers with less than 1000 ads')
-if not show_manuf_1k_ads:
-    df = df.groupby('manufacturer').filter(lambda x: len(x) > 1000)
+# Load Data
+df = pd.read_csv('vehicles_us.csv')   # Adjust path if needed
 
-st.dataframe(df)
-st.header('Vehicle types by manufacturer')
-st.write(px.histogram(df, x='manufacturer', color='type'))
-st.header('Histogram of `condition` vs `model_year`')
+# Show Data Preview
+if st.checkbox("Show raw data"):
+    st.write(df.head())
 
-# -------------------------------------------------------
-# histograms in plotly:
-# fig = go.Figure()
-# fig.add_trace(go.Histogram(x=df[df['condition']=='good']['model_year'], name='good'))
-# fig.add_trace(go.Histogram(x=df[df['condition']=='excellent']['model_year'], name='excellent'))
-# fig.update_layout(barmode='stack')
-# st.write(fig)
-# works, but too many lines of code
-# -------------------------------------------------------
+# Plotly Histogram
+st.subheader("Histogram")
+selected_hist_col = st.selectbox("Select column for histogram", df.select_dtypes(include='number').columns)
+hist_fig = px.histogram(df, x=selected_hist_col, title=f"Histogram of {selected_hist_col}")
+st.plotly_chart(hist_fig)
 
-# histograms in plotly_express:
-st.write(px.histogram(df, x='model_year', color='condition'))
-# a lot more concise!
-# -------------------------------------------------------
+# Plotly Scatter Plot
+st.subheader("Scatter Plot")
+numeric_cols = df.select_dtypes(include='number').columns
+x_col = st.selectbox("Select X-axis", numeric_cols, key='scatter_x')
+y_col = st.selectbox("Select Y-axis", numeric_cols, key='scatter_y')
 
-st.header('Compare price distribution between manufacturers')
-manufac_list = sorted(df['manufacturer'].unique())
-manufacturer_1 = st.selectbox('Select manufacturer 1',
-                              manufac_list, index=manufac_list.index('chevrolet'))
+scatter_fig = px.scatter(df, x=x_col, y=y_col, title=f"Scatter Plot: {x_col} vs {y_col}")
+st.plotly_chart(scatter_fig)
 
-manufacturer_2 = st.selectbox('Select manufacturer 2',
-                              manufac_list, index=manufac_list.index('hyundai'))
-mask_filter = (df['manufacturer'] == manufacturer_1) | (df['manufacturer'] == manufacturer_2)
-df_filtered = df[mask_filter]
-normalize = st.checkbox('Normalize histogram', value=True)
-if normalize:
-    histnorm = 'percent'
-else:
-    histnorm = None
-st.write(px.histogram(df_filtered,
-                      x='price',
-                      nbins=30,
-                      color='manufacturer',
-                      histnorm=histnorm,
-                      barmode='overlay'))
+# Checkbox to toggle title visibility
+if st.checkbox("Hide chart titles"):
+    hist_fig.update_layout(title=None)
+    scatter_fig.update_layout(title=None)
+    st.plotly_chart(hist_fig)
+    st.plotly_chart(scatter_fig)
